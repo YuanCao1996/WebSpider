@@ -1,0 +1,79 @@
+
+import re
+import requests
+from bs4 import BeautifulSoup
+
+filepath="E:/7.3/paragraph/";
+
+class Tool:
+    removeImg = re.compile('<img.*?>| {7}|')
+    removeAddr = re.compile('<a.*?>|</a>')
+    replaceLine = re.compile('<tr>|<div>|</div>|</p>|<br/>')
+    replaceTD= re.compile('<td>')
+    replacePara = re.compile('<p.*?>')
+    replaceBR = re.compile('<br><br>|<br/>')
+    
+    removeExtraTag = re.compile('<.*?>')
+
+    def replace(self,x):
+        x = re.sub(self.removeImg,"",x)
+        x = re.sub(self.removeAddr,"",x)
+        x = re.sub(self.replaceLine,"\n",x)
+        x = re.sub(self.replaceTD,"\t\n",x)
+        x = re.sub(self.replacePara,"\n    ",x)
+        x = re.sub(self.replaceBR,"\n",x)
+        x = re.sub(self.removeExtraTag,"",x)
+        
+        return x.strip()
+
+tool=Tool()
+
+
+url = "https://www.zbyw.cn/qinggangushi/";
+htmlr=requests.get(url);
+
+bsObjHtml=BeautifulSoup(htmlr.content,'html.parser',from_encoding='gb18030');
+
+for pagelist in bsObjHtml.findAll("div",{"class":"block_pager"}):
+    for page in pagelist:
+        for index in range(1,60):
+                #urlpage='list-22-'+str(index)+'.html';
+                #urlpage=urlpage[13:27]#cut 
+                urlpage=str(index)+'.html'
+                index=index+1
+                print (urlpage);
+                rpage=requests.get(url+urlpage);
+                bsObjPage=BeautifulSoup(rpage.content,'html.parser',from_encoding='gb18030');
+                for titlelist in bsObjPage.findAll("article",{"class":"topic_feature"}):
+                    if (titlelist.a != None):
+                        urltext=titlelist.a["href"];
+                        if len(titlelist.contents[1]) !=1:
+                            filename=titlelist.contents[1].text;
+                        else:
+                            filename=titlelist.contents[0].text;
+                        #filename = str(urltext)
+                        print (urltext)
+                        #filename=titlelist.a["title"];
+                        if filename!=None :
+                              #print (urltext+" "+urltext[48:58]+" success!")
+                              #fp=open(filepath+str(filename).replace("['","").replace("']","")+".txt","w",encoding="utf-16");
+                              fp=open(filepath+str(filename).replace("['","").replace("']","")+".txt","w",encoding="utf-16");
+                              rtext=requests.get('https://www.zbyw.cn'+urltext);
+                              bsObjtext=BeautifulSoup(rtext.content,'html.parser',from_encoding='gb18030');
+                         
+                              #filetext=bsObjtext.find("div",{"id":"sdcms_content"});
+                                            
+                              filetext=bsObjtext.findAll("div",{"class":"content"});
+                              filetext=str(filetext).replace("[","").replace("]","")
+                              fp.write(tool.replace(filetext.__str__()));
+
+                              fp.close();                                                                  
+                                       
+                    
+                                      
+           
+                                
+                                        
+            
+
+            
